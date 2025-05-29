@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
 
 import java.util.List;
 
@@ -21,6 +22,12 @@ public class CountryCodeController {
 
     @Autowired
     private CountryService countryService;
+
+    @GetMapping("/")
+    public String home(Model model) {
+        model.addAttribute("countries", List.of("Russia", "USA", "UK"));
+        return "index";
+    }
 
     @Operation(summary = "Получить код страны по названию",
             responses = {
@@ -70,6 +77,34 @@ public class CountryCodeController {
         return countryService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Создать несколько стран",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Страны созданы"),
+                    @ApiResponse(responseCode = "400", description = "Неверные параметры запроса")
+            })
+    @PostMapping("/createAll")
+    public ResponseEntity<List<Country>> createCountries(
+            @Parameter(description = "Данные стран")
+            @RequestBody List<Country> countries,
+            @Parameter(description = "ID связанного человека")
+            @RequestParam Integer personId) {
+        List<Country> createdCountries = countryService.createAll(countries, personId);
+        return ResponseEntity.ok(createdCountries);
+    }
+
+    @Operation(summary = "Обновить несколько стран",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Данные обновлены"),
+                    @ApiResponse(responseCode = "404", description = "Некоторые страны не найдены")
+            })
+    @PutMapping("/updateAll")
+    public ResponseEntity<List<Country>> updateCountries(
+            @Parameter(description = "Новые данные стран")
+            @RequestBody List<Country> countryDetails) {
+        List<Country> updatedCountries = countryService.updateAll(countryDetails);
+        return ResponseEntity.ok(updatedCountries);
     }
 
     @Operation(summary = "Создать новую страну",

@@ -1,8 +1,10 @@
 package com.example.mylab.cache;
 
+import org.springframework.stereotype.Component;
+
 import java.util.HashMap;
 import java.util.Map;
-
+@Component
 public class CommonCache {
     private static final Map<String, Object> cache = new HashMap<>();
     private static final Map<String, Map<Integer, Object>> idCache = new HashMap<>();

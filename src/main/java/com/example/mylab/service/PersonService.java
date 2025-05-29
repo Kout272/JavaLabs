@@ -14,45 +14,50 @@ import java.util.stream.Collectors;
 @Service
 public class PersonService {
     private static final String CACHE_NAME = "persons";
-    private static final String ALL_PERSONS_CACHE_KEY = "all_persons";
+    private static final String ALL_PERSONS_KEY = "all_persons";
+    private static final String PERSONS_BY_COUNTRY_PREFIX = "persons_by_country_";
 
-    private final PersonRepository repository;
+    private final PersonRepository personRepository;
     private final RequestCounter requestCounter;
+    private final CommonCache commonCache;
 
     @Autowired
-    public PersonService(PersonRepository repository, RequestCounter requestCounter) {
-        this.repository = repository;
+    public PersonService(PersonRepository personRepository,
+                         RequestCounter requestCounter,
+                         CommonCache commonCache) {
+        this.personRepository = personRepository;
         this.requestCounter = requestCounter;
+        this.commonCache = commonCache;
     }
 
     public List<Person> findAll() {
         requestCounter.increment("PersonService.findAll");
-        List<Person> cached = CommonCache.get(ALL_PERSONS_CACHE_KEY, List.class);
+        List<Person> cached = commonCache.get(ALL_PERSONS_KEY, List.class);
         if (cached != null) {
             return cached;
         }
 
-        List<Person> persons = repository.findAll();
+        List<Person> persons = personRepository.findAll();
         cachePersons(persons);
-        CommonCache.put(ALL_PERSONS_CACHE_KEY, persons);
+        commonCache.put(ALL_PERSONS_KEY, persons);
         return persons;
     }
 
     public Optional<Person> findById(Integer id) {
         requestCounter.increment("PersonService.findById");
-        Person cached = CommonCache.getById(CACHE_NAME, id, Person.class);
+        Person cached = commonCache.getById(CACHE_NAME, id, Person.class);
         if (cached != null) {
             return Optional.of(cached);
         }
 
-        Optional<Person> person = repository.findById(id);
+        Optional<Person> person = personRepository.findById(id);
         person.ifPresent(this::cachePerson);
         return person;
     }
 
     public Person create(Person person) {
         requestCounter.increment("PersonService.create");
-        Person saved = repository.save(person);
+        Person saved = personRepository.save(person);
         cachePerson(saved);
         invalidateAllPersonsCache();
         return saved;
@@ -61,7 +66,7 @@ public class PersonService {
     public List<Person> createAll(List<Person> persons) {
         requestCounter.increment("PersonService.createAll");
         List<Person> savedPersons = persons.stream()
-                .map(repository::save)
+                .map(personRepository::save)
                 .peek(this::cachePerson)
                 .collect(Collectors.toList());
         invalidateAllPersonsCache();
@@ -70,12 +75,12 @@ public class PersonService {
 
     public Person update(Integer id, Person personDetails) {
         requestCounter.increment("PersonService.update");
-        return repository.findById(id)
+        return personRepository.findById(id)
                 .map(existing -> {
                     clearPersonCache(existing);
                     existing.setName(personDetails.getName());
                     existing.setSurname(personDetails.getSurname());
-                    Person updated = repository.save(existing);
+                    Person updated = personRepository.save(existing);
                     cachePerson(updated);
                     invalidateAllPersonsCache();
                     return updated;
@@ -86,12 +91,12 @@ public class PersonService {
     public List<Person> updateAll(List<Person> personUpdates) {
         requestCounter.increment("PersonService.updateAll");
         return personUpdates.stream()
-                .map(update -> repository.findById(update.getId())
+                .map(update -> personRepository.findById(update.getId())
                         .map(existing -> {
                             clearPersonCache(existing);
                             existing.setName(update.getName());
                             existing.setSurname(update.getSurname());
-                            Person updated = repository.save(existing);
+                            Person updated = personRepository.save(existing);
                             cachePerson(updated);
                             return updated;
                         })
@@ -103,37 +108,37 @@ public class PersonService {
 
     public void delete(Integer id) {
         requestCounter.increment("PersonService.delete");
-        repository.findById(id).ifPresent(person -> {
+        personRepository.findById(id).ifPresent(person -> {
             clearPersonCache(person);
             invalidateAllPersonsCache();
-            repository.deleteById(id);
+            personRepository.deleteById(id);
         });
     }
 
     public void deleteAll(List<Integer> ids) {
         requestCounter.increment("PersonService.deleteAll");
-        List<Person> persons = repository.findAllById(ids);
+        List<Person> persons = personRepository.findAllById(ids);
         persons.forEach(this::clearPersonCache);
         invalidateAllPersonsCache();
-        repository.deleteAllById(ids);
+        personRepository.deleteAllById(ids);
     }
 
     public List<Person> findByCountryName(String countryName) {
         requestCounter.increment("PersonService.findByCountryName");
-        String cacheKey = "persons_by_country_" + countryName;
-        List<Person> cached = CommonCache.get(cacheKey, List.class);
+        String cacheKey = PERSONS_BY_COUNTRY_PREFIX + countryName;
+        List<Person> cached = commonCache.get(cacheKey, List.class);
         if (cached != null) {
             return cached;
         }
 
-        List<Person> persons = repository.findPersonsByCountryName(countryName);
-        CommonCache.put(cacheKey, persons);
+        List<Person> persons = personRepository.findPersonsByCountryName(countryName);
+        commonCache.put(cacheKey, persons);
         cachePersons(persons);
         return persons;
     }
 
     private void cachePerson(Person person) {
-        CommonCache.putWithId(CACHE_NAME, person.getId(), person);
+        commonCache.putWithId(CACHE_NAME, person.getId(), person);
     }
 
     private void cachePersons(List<Person> persons) {
@@ -141,10 +146,10 @@ public class PersonService {
     }
 
     private void clearPersonCache(Person person) {
-        CommonCache.removeById(CACHE_NAME, person.getId());
+        commonCache.removeById(CACHE_NAME, person.getId());
     }
 
     private void invalidateAllPersonsCache() {
-        CommonCache.put(ALL_PERSONS_CACHE_KEY, null);
+        commonCache.put(ALL_PERSONS_KEY, null);
     }
 }

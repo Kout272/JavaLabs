@@ -38,6 +38,18 @@ public class PersonController {
         return updatedPerson != null ? ResponseEntity.ok(updatedPerson) : ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/createAll")
+    public ResponseEntity<List<Person>> createPersons(@RequestBody List<Person> persons) {
+        List<Person> createdPersons = personService.createAll(persons);
+        return ResponseEntity.ok(createdPersons);
+    }
+
+    @PutMapping("/updateAll")
+    public ResponseEntity<List<Person>> updatePersons(@RequestBody List<Person> personUpdates) {
+        List<Person> updatedPersons = personService.updateAll(personUpdates);
+        return ResponseEntity.ok(updatedPersons);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePerson(@PathVariable Integer id) {
         personService.delete(id);

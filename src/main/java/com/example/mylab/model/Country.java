@@ -1,8 +1,9 @@
 package com.example.mylab.model;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import javax.persistence.*;
+
+        import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import jakarta.persistence.*;
 
 @Entity
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -11,21 +12,23 @@ public class Country {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false, length = 3)
     private String code;
 
     @ManyToOne
     @JoinColumn(name = "person_id")
     private Person person;
 
+    public Country() {
+    }
+
     public Country(String name, String code, Person person) {
         this.name = name;
         this.code = code;
         this.person = person;
-    }
-
-    public Country() {
-
     }
 
     public Integer getId() {
@@ -59,4 +62,5 @@ public class Country {
     public void setPerson(Person person) {
         this.person = person;
     }
+
 }
