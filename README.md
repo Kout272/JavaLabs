@@ -28,4 +28,6 @@
 -UI для добавления, удаления и обновления.
 ```
 
+## Скриншот программы: 
+
 ![image](https://github.com/user-attachments/assets/52b80cdd-bb23-403e-84c6-3e24994bda5a)
