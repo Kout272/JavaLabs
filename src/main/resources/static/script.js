@@ -56,7 +56,7 @@ function saveCountry() {
     if (!nameInput || !codeInput) {
         alert('Пожалуйста, заполните все поля');
         return;
-    } //
+    }
 
     if (editCountryId) {
         const country = countries.find(c => c.id === editCountryId);
