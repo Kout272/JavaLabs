@@ -1,24 +1,19 @@
 package com.example.mylab;
 
-import com.example.mylab.cache.CommonCache;
-import com.example.mylab.counter.RequestCounter;
 import com.example.mylab.model.Country;
-import com.example.mylab.model.Person;
 import com.example.mylab.repository.CountryRepository;
 import com.example.mylab.service.CountryService;
-import com.example.mylab.service.PersonService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,134 +22,103 @@ class CountryServiceTest {
     @Mock
     private CountryRepository countryRepository;
 
-    @Mock
-    private PersonService personService;
-
-    @Mock
-    private RequestCounter requestCounter;
-
-    @Mock
-    private CommonCache commonCache;
-
     @InjectMocks
     private CountryService countryService;
 
-    private Country testCountry;
-    private Person testPerson;
+    @Test
+    void create_ShouldSaveCountry_WhenDataIsValid() {
+        Country country = new Country("Belarus", "BY");
+        when(countryRepository.save(country)).thenReturn(country);
 
-    @BeforeEach
-    void setUp() {
-        testPerson = mock(Person.class);
-        when(testPerson.getId()).thenReturn(1);
-        when(testPerson.getName()).thenReturn("Test");
+        Country savedCountry = countryService.create(country);
 
-        testCountry = mock(Country.class);
-        when(testCountry.getId()).thenReturn(1);
-        when(testCountry.getName()).thenReturn("TestCountry");
-        when(testCountry.getCode()).thenReturn("+1");
-        when(testCountry.getPerson()).thenReturn(testPerson);
+        assertNotNull(savedCountry);
+        assertEquals("Belarus", savedCountry.getName());
+        verify(countryRepository).save(country);
     }
 
     @Test
-    void findAll_ShouldReturnCachedCountries_WhenCacheExists() {
-        when(commonCache.get("all_countries", List.class))
-                .thenReturn(List.of(testCountry));
+    void create_ShouldThrowException_WhenNameOrCodeIsNull() {
+        Country invalidCountry = new Country(null, null);
+
+        assertThrows(IllegalArgumentException.class, () -> countryService.create(invalidCountry));
+        verify(countryRepository, never()).save(any());
+    }
+
+    @Test
+    void create_ShouldThrowException_WhenCodeAlreadyExists() {
+        Country country = new Country("Belarus", "BY");
+        when(countryRepository.save(country)).thenThrow(DataIntegrityViolationException.class);
+
+        assertThrows(IllegalArgumentException.class, () -> countryService.create(country));
+    }
+
+    @Test
+    void getCodeByCountry_ShouldReturnCode_WhenCountryExists() {
+        String countryName = "Belarus";
+        Country country = new Country(countryName, "BY");
+        when(countryRepository.findByName(countryName)).thenReturn(Optional.of(country));
+
+        String code = countryService.getCodeByCountry(countryName);
+
+        assertEquals("BY", code);
+    }
+
+    @Test
+    void getCodeByCountry_ShouldReturnNull_WhenCountryNotExists() {
+        when(countryRepository.findByName("Unknown")).thenReturn(Optional.empty());
+
+        String code = countryService.getCodeByCountry("Unknown");
+
+        assertNull(code);
+    }
+
+    @Test
+    void findAll_ShouldReturnAllCountries() {
+        List<Country> countries = List.of(
+                new Country("Belarus", "BY"),
+                new Country("Russia", "RU")
+        );
+        when(countryRepository.findAll()).thenReturn(countries);
 
         List<Country> result = countryService.findAll();
 
-        assertEquals(1, result.size());
-        verify(commonCache, never()).put(anyString(), any());
-        verify(countryRepository, never()).findAll();
+        assertEquals(2, result.size());
+        verify(countryRepository).findAll();
     }
 
     @Test
-    void findById_ShouldReturnCachedCountry_WhenExistsInCache() {
-        when(commonCache.getById("countries", 1, Country.class))
-                .thenReturn(testCountry);
+    void update_ShouldUpdateCountry_WhenIdExists() {
+        Integer id = 1;
+        Country existingCountry = new Country("Belarus", "BY");
+        Country updatedDetails = new Country("Belarus Updated", "BY");
 
-        Optional<Country> result = countryService.findById(1);
+        when(countryRepository.findById(id)).thenReturn(Optional.of(existingCountry));
+        when(countryRepository.save(existingCountry)).thenReturn(updatedDetails);
 
-        assertTrue(result.isPresent());
-        assertEquals(testCountry, result.get());
-        verify(countryRepository, never()).findById(anyInt());
+        Country result = countryService.update(id, updatedDetails);
+
+        assertEquals("Belarus Updated", result.getName());
+        verify(countryRepository).findById(id);
+        verify(countryRepository).save(existingCountry);
     }
 
     @Test
-    void create_ShouldSaveAndCacheNewCountry_WhenPersonExists() {
-        when(personService.findById(1)).thenReturn(Optional.of(testPerson));
-        when(countryRepository.save(any(Country.class))).thenReturn(testCountry);
+    void update_ShouldReturnNull_WhenIdNotExists() {
+        when(countryRepository.findById(999)).thenReturn(Optional.empty());
 
-        Country result = countryService.create(testCountry, 1);
+        Country result = countryService.update(999, new Country());
 
-        assertNotNull(result);
-        verify(commonCache).putWithId("countries", 1, testCountry);
-        verify(commonCache).put("all_countries", null);
+        assertNull(result);
     }
 
     @Test
-    void update_ShouldUpdateExistingCountry_WhenFound() {
-        Country updated = mock(Country.class);
-        when(updated.getName()).thenReturn("Updated");
-        when(updated.getCode()).thenReturn("+2");
+    void delete_ShouldDeleteCountry_WhenIdExists() {
+        Integer id = 1;
+        doNothing().when(countryRepository).deleteById(id);
 
-        when(countryRepository.findById(1)).thenReturn(Optional.of(testCountry));
-        when(countryRepository.save(any(Country.class))).thenReturn(testCountry);
+        countryService.delete(id);
 
-        Country result = countryService.update(1, updated);
-
-        assertNotNull(result);
-        assertEquals("TestCountry", testCountry.getName());
-        verify(commonCache).removeById("countries", 1);
-    }
-
-    @Test
-    void delete_ShouldRemoveCountry_WhenExists() {
-        when(countryRepository.findById(1)).thenReturn(Optional.of(testCountry));
-
-        countryService.delete(1);
-
-        verify(countryRepository).deleteById(1);
-        verify(commonCache).removeById("countries", 1);
-    }
-
-    @Test
-    void createAll_ShouldSaveMultipleCountries_WhenPersonExists() {
-        when(personService.findById(1)).thenReturn(Optional.of(testPerson));
-        when(countryRepository.save(any(Country.class))).thenReturn(testCountry);
-
-        List<Country> result = countryService.createAll(List.of(testCountry), 1);
-
-        assertEquals(1, result.size());
-        verify(commonCache, times(1)).putWithId(eq("countries"), eq(1), any());
-    }
-
-    @Test
-    void updateAll_ShouldProcessMultipleUpdates() {
-        Country update = mock(Country.class);
-        when(update.getId()).thenReturn(1);
-        when(update.getName()).thenReturn("Updated");
-
-        when(countryRepository.findById(1)).thenReturn(Optional.of(testCountry));
-        when(countryRepository.save(any(Country.class))).thenReturn(testCountry);
-
-        List<Country> result = countryService.updateAll(List.of(update));
-
-        assertEquals(1, result.size());
-        verify(commonCache).removeById("countries", 1);
-    }
-
-    @Test
-    void shouldIncrementCounter_ForAllOperations() {
-        when(personService.findById(1)).thenReturn(Optional.of(testPerson));
-        when(countryRepository.save(any())).thenReturn(testCountry);
-        when(countryRepository.findById(1)).thenReturn(Optional.of(testCountry));
-
-        countryService.findAll();
-        countryService.findById(1);
-        countryService.create(testCountry, 1);
-        countryService.update(1, testCountry);
-        countryService.delete(1);
-
-        verify(requestCounter, times(5)).increment(anyString());
+        verify(countryRepository).deleteById(id);
     }
 }
