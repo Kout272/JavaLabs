@@ -35,8 +35,8 @@
 
 
 ### 6 лаба:
-
+![image](https://github.com/user-attachments/assets/cb2734da-99c4-485b-bb82-a3ab26d09060)
 
 
 ### 7 лаба:
-![image](https://github.com/user-attachments/assets/52b80cdd-bb23-403e-84c6-3e24994bda5a)
+
