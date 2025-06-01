@@ -28,6 +28,14 @@
 -UI для добавления, удаления и обновления.
 ```
 
-## Скриншот программы: 
+## Скриншоты программы: 
 
+### 5 лаба:
+![image](https://github.com/user-attachments/assets/4b9e9fd5-1993-448d-9ff5-c8396181072e)
+
+### 6 лаба:
+
+
+
+### 7 лаба:
 ![image](https://github.com/user-attachments/assets/52b80cdd-bb23-403e-84c6-3e24994bda5a)
