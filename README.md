@@ -28,6 +28,25 @@
 -UI для добавления, удаления и обновления.
 ```
 
-## Скриншот программы: 
+## Скриншоты программы: 
 
-![image](https://github.com/user-attachments/assets/52b80cdd-bb23-403e-84c6-3e24994bda5a)
+### 5 лаба:
+![image](https://github.com/user-attachments/assets/54efa43e-20e0-4052-9370-34babdfb4e26)
+
+
+### 6 лаба:
+![image](https://github.com/user-attachments/assets/cb2734da-99c4-485b-bb82-a3ab26d09060)
+
+
+### 7 лаба:
+![image](https://github.com/user-attachments/assets/1479dc61-5c46-4069-94d4-dfdea3b62a4f)
+
+![image](https://github.com/user-attachments/assets/da873bf5-e1e9-49bc-9932-a28913e9a1ba)
+
+![image](https://github.com/user-attachments/assets/11fe753b-a89b-4000-820c-53efe1ea0e09)
+
+![image](https://github.com/user-attachments/assets/1ab0fa17-994f-4fa2-9fa3-d2e9337fad2d)
+
+
+
+
