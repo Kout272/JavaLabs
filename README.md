@@ -31,7 +31,8 @@
 ## Скриншоты программы: 
 
 ### 5 лаба:
-![image](https://github.com/user-attachments/assets/4b9e9fd5-1993-448d-9ff5-c8396181072e)
+![image](https://github.com/user-attachments/assets/54efa43e-20e0-4052-9370-34babdfb4e26)
+
 
 ### 6 лаба:
 
