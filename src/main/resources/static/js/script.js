@@ -165,4 +165,3 @@ function ShowAlert(message, type) {
         alert.alert('close');
     }, 5000);
 }
-//
