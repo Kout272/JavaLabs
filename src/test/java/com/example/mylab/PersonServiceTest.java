@@ -5,8 +5,10 @@ import com.example.mylab.counter.RequestCounter;
 import com.example.mylab.model.Person;
 import com.example.mylab.repository.PersonRepository;
 import com.example.mylab.service.PersonService;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,8 +16,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PersonServiceTest {
@@ -33,7 +41,7 @@ class PersonServiceTest {
     private PersonService personService;
 
     @Test
-    void findAll_ShouldReturnPersonsFromCache_WhenCacheExists() {
+    void FindAllShouldReturnPersonsFromCacheWhenCacheExists() {
         List<Person> cachedPersons = List.of(new Person("Ivan", "Ivanov"));
         when(commonCache.get("all_persons", List.class)).thenReturn(cachedPersons);
 
@@ -45,7 +53,7 @@ class PersonServiceTest {
     }
 
     @Test
-    void findAll_ShouldFetchFromDbAndCache_WhenCacheEmpty() {
+    void FindAllShouldFetchFromDbAndCacheWhenCacheEmpty() {
         List<Person> dbPersons = List.of(new Person("Ivan", "Ivanov"));
         when(commonCache.get("all_persons", List.class)).thenReturn(null);
         when(personRepository.findAll()).thenReturn(dbPersons);
@@ -58,7 +66,7 @@ class PersonServiceTest {
     }
 
     @Test
-    void findById_ShouldReturnCachedPerson_WhenExistsInCache() {
+    void FindByIdShouldReturnCachedPersonWhenExistsInCache() {
         Person cachedPerson = new Person("Ivan", "Ivanov");
         when(commonCache.getById("persons", 1, Person.class)).thenReturn(cachedPerson);
 
@@ -70,14 +78,16 @@ class PersonServiceTest {
     }
 
     @Test
-    void create_ShouldSavePersonAndInvalidateCache() {
+    void CreateShouldSavePersonAndInvalidateCache() {
         Person newPerson = new Person("Timur", "Panov");
         Person savedPerson = new Person("Timur", "Panov");
+        savedPerson.setId(1);
 
         when(personRepository.save(newPerson)).thenReturn(savedPerson);
 
         Person result = personService.create(newPerson);
 
+        assertNotNull(result);
         assertEquals(1, result.getId());
         verify(commonCache).putWithId("persons", 1, savedPerson);
         verify(commonCache).put("all_persons", null);
@@ -85,7 +95,7 @@ class PersonServiceTest {
     }
 
     @Test
-    void update_ShouldUpdatePersonAndCache() {
+    void UpdateShouldUpdatePersonAndCache() {
         Person existingPerson = new Person("Ivan", "Ivanov");
         Person updatedDetails = new Person("Ivan", "Updated");
 
@@ -100,7 +110,7 @@ class PersonServiceTest {
     }
 
     @Test
-    void delete_ShouldRemovePersonAndCache() {
+    void DeleteShouldRemovePersonAndCache() {
         Person personToDelete = new Person("Ivan", "Ivanov");
         when(personRepository.findById(1)).thenReturn(Optional.of(personToDelete));
 

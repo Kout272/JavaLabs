@@ -4,6 +4,7 @@ import com.example.mylab.cache.CommonCache;
 import com.example.mylab.counter.RequestCounter;
 import com.example.mylab.model.Person;
 import com.example.mylab.repository.PersonRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +23,10 @@ public class PersonService {
     private final CommonCache commonCache;
 
     @Autowired
-    public PersonService(PersonRepository personRepository,
-                         RequestCounter requestCounter,
-                         CommonCache commonCache) {
+    public PersonService(
+            PersonRepository personRepository,
+            RequestCounter requestCounter,
+            CommonCache commonCache) {
         this.personRepository = personRepository;
         this.requestCounter = requestCounter;
         this.commonCache = commonCache;
