@@ -16,16 +16,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CountryServiceTest {
@@ -44,7 +36,7 @@ class CountryServiceTest {
         Country savedCountry = countryService.create(country);
 
         assertNotNull(savedCountry);
-        assertEquals("Belarus", savedCountry.getName());
+        assertEquals("BY", savedCountry.getCode());
         verify(countryRepository).save(country);
     }
 
@@ -59,7 +51,8 @@ class CountryServiceTest {
     @Test
     void CreateShouldThrowExceptionWhenCodeAlreadyExists() {
         Country country = new Country("Belarus", "BY");
-        when(countryRepository.save(country)).thenThrow(DataIntegrityViolationException.class);
+        when(countryRepository.save(country))
+                .thenThrow(new DataIntegrityViolationException("Duplicate code"));
 
         assertThrows(IllegalArgumentException.class, () -> countryService.create(country));
     }
@@ -67,8 +60,8 @@ class CountryServiceTest {
     @Test
     void GetCodeByCountryShouldReturnCodeWhenCountryExists() {
         String countryName = "Belarus";
-        Country country = new Country(countryName, "BY");
-        when(countryRepository.findByName(countryName)).thenReturn(Optional.of(country));
+        when(countryRepository.findByName(countryName))
+                .thenReturn(Optional.of(new Country(countryName, "BY")));
 
         String code = countryService.getCodeByCountry(countryName);
 
@@ -86,32 +79,33 @@ class CountryServiceTest {
 
     @Test
     void FindAllShouldReturnAllCountries() {
-        List<Country> countries = List.of(
+        List<Country> mockCountries = List.of(
                 new Country("Belarus", "BY"),
-                new Country("Russia", "RU")
+                new Country("Poland", "PL")
         );
-        when(countryRepository.findAll()).thenReturn(countries);
+        when(countryRepository.findAll()).thenReturn(mockCountries);
 
         List<Country> result = countryService.findAll();
 
         assertEquals(2, result.size());
+        assertEquals("PL", result.get(1).getCode());
         verify(countryRepository).findAll();
     }
 
     @Test
     void UpdateShouldUpdateCountryWhenIdExists() {
         Integer id = 1;
-        Country existingCountry = new Country("Belarus", "BY");
-        Country updatedDetails = new Country("Belarus Updated", "BY");
+        Country existing = new Country("Belarus", "BY");
+        Country updated = new Country("Belarus Updated", "BY");
 
-        when(countryRepository.findById(id)).thenReturn(Optional.of(existingCountry));
-        when(countryRepository.save(existingCountry)).thenReturn(updatedDetails);
+        when(countryRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(countryRepository.save(existing)).thenReturn(updated);
 
-        Country result = countryService.update(id, updatedDetails);
+        Country result = countryService.update(id, updated);
 
         assertEquals("Belarus Updated", result.getName());
         verify(countryRepository).findById(id);
-        verify(countryRepository).save(existingCountry);
+        verify(countryRepository).save(existing);
     }
 
     @Test
@@ -121,6 +115,21 @@ class CountryServiceTest {
         Country result = countryService.update(999, new Country());
 
         assertNull(result);
+        verify(countryRepository, never()).save(any());
+    }
+
+    @Test
+    void UpdateShouldThrowExceptionWhenCodeConflict() {
+        Integer id = 1;
+        Country existing = new Country("Belarus", "BY");
+        Country updated = new Country("Belarus", "RU"); // RU уже существует
+
+        when(countryRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(countryRepository.save(existing))
+                .thenThrow(new DataIntegrityViolationException("Duplicate code"));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> countryService.update(id, updated));
     }
 
     @Test
