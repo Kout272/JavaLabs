@@ -33,7 +33,7 @@ function HandleCountryFormSubmit() {
         code: $('#countryCode').val().trim()
     };
 
-    if (!countryData.name || !countryCode) {
+    if (!countryData.name || !countryData.code) {
         ShowAlert('Country name and code are required', 'danger');
         return;
     }
